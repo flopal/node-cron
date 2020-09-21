@@ -15,7 +15,7 @@ class Scheduler extends EventEmitter{
         this.stop();
 
         let lastCheck = process.hrtime();
-        let lastExecution = new Date();
+        let lastExecution = this.timeMatcher.apply(new Date());
 
         var matchTime = () => {
             const delay = 1000;
@@ -25,10 +25,11 @@ class Scheduler extends EventEmitter{
             
             for(let i = missedExecutions; i >= 0; i--){
                 var date = new Date(new Date().getTime() - i * 1000);
-                if(lastExecution.getTime() < date.getTime() && (i === 0 || this.autorecover) && this.timeMatcher.match(date)){
-                    this.emit('scheduled-time-matched', date);
-                    date.setMilliseconds(0);
-                    lastExecution = date;
+                let date_tmp = this.timeMatcher.apply(date);
+                if (lastExecution.getTime() < date_tmp.getTime() && (i === 0 || this.autorecover) && this.timeMatcher.match(date)) {
+                    this.emit('scheduled-time-matched', date_tmp);
+                    date_tmp.setMilliseconds(0);
+                    lastExecution = date_tmp;
                 }
             }
             lastCheck = process.hrtime();

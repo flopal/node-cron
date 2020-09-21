@@ -1,5 +1,7 @@
 const { assert } = require('chai');
 const TimeMatcher = require('../src/time-matcher');
+const tzdata = require('tzdata');
+const luxon = require('luxon');
 
 describe('TimeMatcher', () => {
     describe('wildcard', () => {
@@ -224,8 +226,23 @@ describe('TimeMatcher', () => {
 
         it('should match with timezone Europe/Rome', () => {
             let matcher = new TimeMatcher('0 0 0 * * *', 'Europe/Rome');
-            let utcTime = new Date('Thu Oct 11 2018 23:00:00Z');
+            let utcTime = new Date('Thu Oct 11 2018 22:00:00Z');
             assert.isTrue(matcher.match(utcTime));
+        });
+
+        it('should match with all timezone tzdata', () => {
+            const allTimeZone = tzdata.zone;
+            for (const zone in allTimeZone) {
+                const tmp = luxon.DateTime.local();
+                const tmp_timezone = tmp.setZone(zone);
+                if (tmp_timezone.toString() === 'Invalid DateTime') {
+                    continue;
+                }
+                const pattern = tmp_timezone.seconds + ' ' + tmp_timezone.minute + ' ' + tmp_timezone.hour + ' ' + tmp_timezone.day + ' ' + tmp_timezone.month + ' ' + tmp_timezone.weekday;
+                const utcTime = new Date(tmp.year, tmp.month, tmp.day, tmp.hour, tmp.minute, tmp.second, tmp.millisecond);
+                let matcher = new TimeMatcher(pattern, zone);
+                assert.isTrue(matcher.match(utcTime));
+            }
         });
     });
 });

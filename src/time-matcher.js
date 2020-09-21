@@ -1,6 +1,6 @@
 const validatePattern = require('./pattern-validation');
 const convertExpression = require('./convert-expression');
-const tzOffset = require('tz-offset');
+const luxon = require('luxon');
 
 function matchPattern(pattern, value){
     if( pattern.indexOf(',') !== -1 ){
@@ -19,9 +19,7 @@ class TimeMatcher{
     }
 
     match(date){
-        if(this.timezone){
-            date = tzOffset.timeAt(date, this.timezone);
-        }
+        date = this.apply(date);
         var runOnSecond = matchPattern(this.expressions[0], date.getSeconds());
         var runOnMinute = matchPattern(this.expressions[1], date.getMinutes());
         var runOnHour = matchPattern(this.expressions[2], date.getHours());
@@ -30,6 +28,14 @@ class TimeMatcher{
         var runOnWeekDay = matchPattern(this.expressions[5], date.getDay());
 
         return runOnSecond && runOnMinute && runOnHour && runOnDay && runOnMonth && runOnWeekDay;
+    }
+
+    apply(date) {
+        if (this.timezone) {
+            const tmp = luxon.DateTime.local(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds()).setZone(this.timezone);
+            return new Date(tmp.year, tmp.month, tmp.day, tmp.hour, tmp.minute, tmp.second, tmp.millisecond);
+        }
+        return date;
     }
 }
 
